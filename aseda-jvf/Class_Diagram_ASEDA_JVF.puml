@@ -1,0 +1,195 @@
+@startuml
+!define RECTANGLE class
+
+RECTANGLE Member {
+  + member_id: int
+  + first_name: varchar
+  + last_name: varchar
+  + email: varchar
+  + password_hash: varchar
+  + role: Role
+  + membershipPaidUntil: LocalDate
+  + active: boolean
+}
+
+RECTANGLE Booking {
+  + booking_id: int
+  + court_id: int
+  + member_id: int
+  + start_time: datetime
+  + end_time: datetime
+  + status: BookingStatus
+}
+
+RECTANGLE Course {
+  + course_id: int
+  + course_name: varchar
+  + course_description: text
+  + start_date: datetime
+  + end_date: datetime
+}
+
+RECTANGLE ShootingSession {
+  + session_id: int
+  + leader_id: int
+  + start_time: datetime
+  + end_time: datetime
+}
+
+RECTANGLE ShootingResult {
+  + result_id: int
+  + session_id: int
+  + member_id: int
+  + target_id: int
+  + score: int
+}
+
+RECTANGLE PaymentLog {
+  + payment_id: int
+  + member_id: int
+  + payment_date: LocalDate
+  + amount: BigDecimal
+  + payment_method: String
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELED
+}
+
+enum TargetType {
+  AIR_RIFLE_10M
+  RAPID_FIRE_25M
+}
+
+RECTANGLE IMemberRepository {
+  + find_by_email()
+  + find_by_id()
+  + save()
+}
+
+RECTANGLE IBookingRepository {
+  + find_by_member_id()
+  + save()
+}
+
+RECTANGLE ICourseRepository {
+  + find_all()
+  + find_by_id()
+  + save()
+}
+
+RECTANGLE IShootingSessionRepository {
+  + find_all()
+  + save()
+}
+
+RECTANGLE IShootingResultRepository {
+  + find_by_member_id()
+  + save()
+}
+
+RECTANGLE PaymentLogRepository {
+  + find_by_member_id()
+  + save()
+}
+
+RECTANGLE MemberService {
+  + register()
+  + login()
+  + update_profile()
+}
+
+RECTANGLE BookingService {
+  + create_booking()
+  + cancel_booking()
+}
+
+RECTANGLE CourseService {
+  + register_course()
+  + update_course()
+}
+
+RECTANGLE ShootingSessionService {
+  + create_session()
+  + add_shooter()
+}
+
+RECTANGLE ShootingResultService {
+  + log_result()
+  + get_results_by_member()
+}
+
+RECTANGLE PaymentLogService {
+  + record_payment()
+  + get_payments_by_member()
+}
+
+RECTANGLE MemberController {
+  + register()
+  + login()
+  + update_profile()
+}
+
+RECTANGLE BookingController {
+  + create_booking()
+  + cancel_booking()
+}
+
+RECTANGLE CourseController {
+  + register()
+  + update_course()
+}
+
+RECTANGLE ShootingSessionController {
+  + create_session()
+  + log_result()
+}
+
+RECTANGLE ShootingResultController {
+  + get_results()
+  + log_result()
+}
+
+RECTANGLE PaymentLogController {
+  + record_payment()
+  + view_payments()
+}
+
+Member --|> PaymentLog : has payments
+Member --|> Booking : makes
+Member --|> ShootingResult : has
+Member --|> ShootingSession : leads
+
+PaymentLog --> Member : belongs to
+
+Booking --> ShootingSession : occurs in
+ShootingSession --> ShootingResult : contains
+ShootingResult --> TargetType : uses
+
+IMemberRepository --> Member : works with
+IBookingRepository --> Booking : manages
+ICourseRepository --> Course : handles
+IShootingSessionRepository --> ShootingSession : handles
+IShootingResultRepository --> ShootingResult : handles
+PaymentLogRepository --> PaymentLog : manages
+
+MemberService --> IMemberRepository : uses
+BookingService --> IBookingRepository : uses
+CourseService --> ICourseRepository : uses
+ShootingSessionService --> IShootingSessionRepository : uses
+ShootingResultService --> IShootingResultRepository : uses
+PaymentLogService --> PaymentLogRepository : uses
+
+MemberController --> MemberService : delegates to
+BookingController --> BookingService : delegates to
+CourseController --> CourseService : delegates to
+ShootingSessionController --> ShootingSessionService : delegates to
+ShootingResultController --> ShootingResultService : delegates to
+PaymentLogController --> PaymentLogService : delegates to
+@enduml
