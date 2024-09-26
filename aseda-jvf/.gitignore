@@ -1,10 +1,15 @@
+### HELP.md ###
 HELP.md
-target/
-!.mvn/wrapper/maven-wrapper.jar
+
+### Maven output ###
+/target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+### Maven Wrapper ###
+!.mvn/wrapper/maven-wrapper.jar
+
+### STS (Spring Tool Suite) ###
 .apt_generated
 .classpath
 .factorypath
@@ -14,10 +19,20 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
+# IntelliJ specific log and backup files
+out/
+.idea/modules.xml
+.idea/*.iml
+.idea/workspace.xml
+.idea/dictionaries
+.idea/libraries
+.idea/shelf/
+.idea/vcs.xml
+.idea/jsLibraryMappings.xml
 
 ### NetBeans ###
 /nbproject/private/
@@ -25,9 +40,51 @@ target/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
+/build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
 ### VS Code ###
 .vscode/
+.history/
+.settings/
+
+### macOS ###
+.DS_Store
+
+### Windows ###
+Thumbs.db
+Desktop.ini
+
+### Log Files ###
+*.log
+logs/
+*.log.*
+*.log.*
+
+### Java ###
+*.class
+*.jar
+*.war
+*.ear
+
+### JBoss Tools ###
+/.jbosstools/
+
+### Eclipse ###
+.metadata/
+*.class
+*.launch
+*.pydevproject
+.project
+.settings/
+bin/
+tmp/
+
+### Backup and temporary files ###
+*.bak
+*.swp
+*~.nib
+*~.bak
+*.tmp
+*.old
