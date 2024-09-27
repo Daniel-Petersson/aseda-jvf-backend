@@ -8,8 +8,8 @@ import java.util.Optional;
 
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
-    Optional<Member> findByFirstNameIgnoreCase(String username);
-    Optional<Member> findByLastNameIgnoreCase(String username);
+    Optional<Member> findByFirstNameIgnoreCase(String firstName);
+    Optional<Member> findByLastNameIgnoreCase(String lastName);
     Optional<Member> findByEmailIgnoreCase(String email);
-    Optional<Member> findByFirstNameAndLastNameIgnoreCase(String firstName, String lastName);
+    Optional<Member> findByFirstNameIgnoreCaseAndLastNameIgnoreCase(String firstName, String lastName);
 }

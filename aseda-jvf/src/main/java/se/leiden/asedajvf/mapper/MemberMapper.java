@@ -8,10 +8,14 @@ import se.leiden.asedajvf.model.Member;
 public class MemberMapper {
 
     public static MemberDtoView toDto(Member member) {
+        if (member == null) {
+            return null;
+        }
         return MemberDtoView.builder()
+                .id(member.getId())  // Make sure this line is present
+                .email(member.getEmail())
                 .firstName(member.getFirstName())
                 .lastName(member.getLastName())
-                .email(member.getEmail())
                 .phone(member.getPhone())
                 .address(member.getAddress())
                 .city(member.getCity())
