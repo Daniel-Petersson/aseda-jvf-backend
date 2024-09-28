@@ -16,4 +16,9 @@ public class CustomPasswordEncoder implements PasswordEncoder {
     public boolean matches(CharSequence rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
+
+    public static void main(String[] args) {
+        CustomPasswordEncoder encoder = new CustomPasswordEncoder();
+        System.out.println(encoder.encode("password"));
+    }
 }
