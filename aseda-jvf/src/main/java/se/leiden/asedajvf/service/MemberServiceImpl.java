@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import se.leiden.asedajvf.dto.MemberDtoForm;
 import se.leiden.asedajvf.dto.MemberDtoView;
+import se.leiden.asedajvf.enums.Role;
 import se.leiden.asedajvf.exeptions.DataNotFoundException;
 import se.leiden.asedajvf.exeptions.EmailAlreadyExistsException;
 import se.leiden.asedajvf.mapper.MemberMapper;
@@ -34,7 +35,11 @@ private final CustomPasswordEncoder customPasswordEncoder;
         String encodedPassword = customPasswordEncoder.encode(memberDtoForm.getPassword());
         //convert MemberDtoForm to Member
         Member member = MemberMapper.toMember(memberDtoForm);
+        // Set password
         member.setPassword(encodedPassword);
+        // Always set role to USER for new registrations
+        member.setRole(Role.USER);
+
         //save the user
         memberRepository.save(member);
 
@@ -87,7 +92,7 @@ private final CustomPasswordEncoder customPasswordEncoder;
             .postalCode(memberDtoForm.getPostalCode())
             .phone(memberDtoForm.getPhone())
             .password(customPasswordEncoder.encode(memberDtoForm.getPassword()))
-            .role(member.getRole())
+            .role(member.getRole() != null ? memberDtoForm.getRole() : member.getRole())
             .dateCreated(member.getDateCreated())
             .dateUpdated(LocalDate.now())
             .membershipPaidUntil(member.getMembershipPaidUntil())
