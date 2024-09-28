@@ -72,7 +72,7 @@ public class MemberServiceImpl implements MemberService {
 			if (memberOptional.isPresent()) {
 				Member member = memberOptional.get();
 				if (customPasswordEncoder.matches(password, member.getPassword())) {
-					return jwtService.createToken(member.getEmail(), member.getRole());
+					return jwtService.createToken(member.getFirstName(), member.getId(), member.getRole());
 				}
 			}
 			throw new AuthenticationException("Invalid email or password");
