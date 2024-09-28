@@ -1,13 +1,12 @@
 package se.leiden.asedajvf.service;
 
-import org.springframework.stereotype.Service;
 import se.leiden.asedajvf.dto.MemberDtoForm;
 import se.leiden.asedajvf.dto.MemberDtoView;
+import se.leiden.asedajvf.exeptions.AuthenticationException;
 
-@Service
 public interface MemberService {
     MemberDtoView registerMember(MemberDtoForm memberDtoForm);
-    boolean authenticateMember(String email, String password);
+    String authenticateMember(String email, String password) throws AuthenticationException;
     MemberDtoView updateMember(MemberDtoForm memberDtoForm);
     MemberDtoView getMember(Long memberId);
     boolean deleteMember(Long memberId);

@@ -2,9 +2,9 @@ package se.leiden.asedajvf.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import se.leiden.asedajvf.enums.Role;
-import java.time.LocalDate;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,6 +27,6 @@ public class MemberDtoForm {
     @NotBlank(message = "City cannot be empty")
     private String city;
     private Role role;
-    @NotBlank(message = "Postal code cannot be empty")
+    @NotNull(message = "Postal code cannot be empty")
     private int postalCode;
 }
