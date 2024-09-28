@@ -26,7 +26,6 @@ import java.util.Optional;
 public class MemberServiceImpl implements MemberService {
 	private final MemberRepository memberRepository;
 	private final CustomPasswordEncoder customPasswordEncoder;
-	@Autowired
 	private final JwtService jwtService;
 
 	public MemberServiceImpl(MemberRepository memberRepository, CustomPasswordEncoder customPasswordEncoder, JwtService jwtService) {

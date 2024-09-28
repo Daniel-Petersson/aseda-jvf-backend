@@ -14,7 +14,7 @@ import lombok.*;
 @Setter
 @Data
 @Entity
-public class Court {
+public class Facility {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
