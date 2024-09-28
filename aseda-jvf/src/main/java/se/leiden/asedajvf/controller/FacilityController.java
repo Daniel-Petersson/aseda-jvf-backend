@@ -1,5 +1,7 @@
 package se.leiden.asedajvf.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.leiden.asedajvf.exeptions.ResourceNotFoundException;
@@ -25,12 +27,12 @@ public class FacilityController {
     @GetMapping("/{id}")
     public ResponseEntity<Facility> getFacilityById(@PathVariable int id) throws ResourceNotFoundException {
        Facility facility = facilityService.getFacilityById(id);
-       return ResponseEntity.ok(facility);
+       return ResponseEntity.status(HttpStatus.FOUND).body(facility);
     }
 
     @GetMapping("/facilityName")
     public ResponseEntity<Facility> getFacilitiesByFacilityName(@RequestParam String facilityName) throws ResourceNotFoundException {
-        Facility facilities= facilityService.getFacilityByFacilityName(facilityName);
-        return ResponseEntity.ok(facilities);
+        Facility facility= facilityService.getFacilityByFacilityName(facilityName);
+        return ResponseEntity.status(HttpStatus.FOUND).body(facility);
     }
 }

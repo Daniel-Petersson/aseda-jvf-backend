@@ -48,10 +48,12 @@ public class Member {
     private String password;
     @CreatedDate
     private LocalDate dateCreated;
-    @UpdateTimestamp
+    @CreatedDate
     private LocalDate dateUpdated;
     private LocalDate membershipPaidUntil;
     private boolean active;
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PaymentLog> paymentLogs = new ArrayList<>();
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Booking> bookings = new ArrayList<>();
 }
