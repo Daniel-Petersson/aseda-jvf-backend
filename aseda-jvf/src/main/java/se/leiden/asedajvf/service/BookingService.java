@@ -4,12 +4,15 @@ import se.leiden.asedajvf.dto.BookingDtoForm;
 import se.leiden.asedajvf.dto.BookingDtoView;
 import se.leiden.asedajvf.model.Booking;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingService {
-    BookingDtoForm registerBooking(BookingDtoForm bookingDtoForm);
-    BookingDtoForm updateBooking(BookingDtoForm bookingDtoForm);
-    BookingDtoView getBooking(String bookingId);
+    BookingDtoView registerBooking(BookingDtoForm bookingDtoForm);
+    BookingDtoView updateBooking(Long bookingId, BookingDtoForm bookingDtoForm);
+    BookingDtoView getBooking(Long bookingId);
     List<Booking> getAllBookings();
-    boolean deleteBooking(Booking bookingId);
+    boolean deleteBooking(Long bookingId);
+    List<Booking> findOverlappingBookings(String facilityId, LocalDateTime startTime, LocalDateTime endTime);
+    BookingDtoView confirmBooking(Long bookingId);
 }

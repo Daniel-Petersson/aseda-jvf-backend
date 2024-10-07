@@ -1,5 +1,7 @@
 package se.leiden.asedajvf.enums;
 
 public enum BookingStatus {
-CONFIRMED,CANCELLED;
+    PENDING,
+    CONFIRMED,
+    CANCELLED;
 }
