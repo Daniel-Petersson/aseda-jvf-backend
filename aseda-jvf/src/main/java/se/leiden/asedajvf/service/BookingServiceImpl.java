@@ -14,6 +14,7 @@ import se.leiden.asedajvf.repository.MemberRepository;
 
 import java.util.List;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -21,6 +22,7 @@ public class BookingServiceImpl implements BookingService {
 
     private final MemberRepository memberRepository;
     private final BookingRepository bookingRepository;
+    private final BookingMapper bookingMapper; // Add this line
 
     @Override
     @Transactional
@@ -30,7 +32,7 @@ public class BookingServiceImpl implements BookingService {
         }
         
         List<Booking> conflictingBookings = findOverlappingBookings(
-            bookingDtoForm.getFacilityId().getId().toString(), 
+            bookingDtoForm.getFacilityId(), // Use the integer directly
             bookingDtoForm.getStartTime(),
             bookingDtoForm.getEndTime()
         );
@@ -39,16 +41,16 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalArgumentException("Conflicting booking exists for the given time and facility");
         }
         
-        Booking booking = BookingMapper.toBooking(bookingDtoForm);
+        Booking booking = bookingMapper.toBooking(bookingDtoForm);
         booking.setStatus(BookingStatus.PENDING);
 
         Booking savedBooking = bookingRepository.save(booking);
-        return BookingMapper.toDto(savedBooking);
+        return bookingMapper.toDto(savedBooking);
     }
 
     @Override
     @Transactional
-    public BookingDtoView updateBooking(Long bookingId, BookingDtoForm bookingDtoForm) {
+    public BookingDtoView updateBooking(int bookingId, BookingDtoForm bookingDtoForm) {
         if (bookingDtoForm == null) {
             throw new IllegalArgumentException("bookingDtoForm is null");
         }
@@ -56,48 +58,44 @@ public class BookingServiceImpl implements BookingService {
             .orElseThrow(() -> new DataNotFoundException("Booking not found"));
         
         // Update booking fields
-        booking.setTitle(bookingDtoForm.getTitle());
-        booking.setFacilityId(bookingDtoForm.getFacilityId());
-        booking.setMemberId(bookingDtoForm.getMemberId());
-        booking.setStartTime(bookingDtoForm.getStartTime());
-        booking.setEndTime(bookingDtoForm.getEndTime());
+        Booking updatedBooking = bookingMapper.toBooking(bookingDtoForm);
+        updatedBooking.setId(bookingId);
+        updatedBooking.setStatus(booking.getStatus());
         
-        Booking updatedBooking = bookingRepository.save(booking);
-        return BookingMapper.toDto(updatedBooking);
+        Booking savedBooking = bookingRepository.save(updatedBooking);
+        return bookingMapper.toDto(savedBooking); // Use instance method
     }
 
     @Override
-    public BookingDtoView getBooking(Long bookingId) {
-        if (bookingId == null) {
-            throw new IllegalArgumentException("bookingId is null");
-        }
+    public BookingDtoView getBooking(int bookingId) {
         return bookingRepository.findById(bookingId)
-                .map(BookingMapper::toDto)
+                .map(bookingMapper::toDto) // Use instance method
                 .orElseThrow(() -> new DataNotFoundException("Booking with id: " + bookingId + " does not exist"));
     }
 
     @Override
-    public List<Booking> getAllBookings() {
-        return (List<Booking>) bookingRepository.findAll();
+    public List<BookingDtoView> getAllBookings() {
+        List<Booking> bookings = bookingRepository.findAll();
+        return bookings.stream()
+                .map(bookingMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public boolean deleteBooking(Long bookingId) {
-        if (bookingId == null) {
-            throw new IllegalArgumentException("bookingId is null");
-        }
-        if (!bookingRepository.existsById(bookingId)) {
-            throw new DataNotFoundException("Booking with id: " + bookingId + " does not exist");
-        }
-        bookingRepository.deleteById(bookingId);
-        return true;
+    public boolean deleteBooking(int id) {
+        return bookingRepository.findById(id)
+            .map(booking -> {
+                bookingRepository.delete(booking);
+                return true;
+            })
+            .orElseThrow(() -> new DataNotFoundException("Booking with id: " + id + " does not exist"));
     }
 
     @Override
-    public List<Booking> findOverlappingBookings(String facilityId, LocalDateTime startTime, LocalDateTime endTime) {
-        if (facilityId == null || startTime == null || endTime == null) {
-            throw new IllegalArgumentException("facilityId, startTime, and endTime must not be null");
+    public List<Booking> findOverlappingBookings(int facilityId, LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime == null || endTime == null) {
+            throw new IllegalArgumentException("startTime and endTime must not be null");
         }
         if (startTime.isAfter(endTime)) {
             throw new IllegalArgumentException("startTime must be before endTime");
@@ -107,12 +105,12 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public BookingDtoView confirmBooking(Long bookingId) {
+    public BookingDtoView confirmBooking(int bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new DataNotFoundException("Booking not found"));
         booking.setStatus(BookingStatus.CONFIRMED);
         bookingRepository.save(booking);
-        return BookingMapper.toDto(booking);
+        return bookingMapper.toDto(booking); // Use instance method
     }
 
     // TODO: Add more robust input validation, especially for date ranges and facility availability

@@ -9,10 +9,10 @@ import java.util.List;
 
 public interface BookingService {
     BookingDtoView registerBooking(BookingDtoForm bookingDtoForm);
-    BookingDtoView updateBooking(Long bookingId, BookingDtoForm bookingDtoForm);
-    BookingDtoView getBooking(Long bookingId);
-    List<Booking> getAllBookings();
-    boolean deleteBooking(Long bookingId);
-    List<Booking> findOverlappingBookings(String facilityId, LocalDateTime startTime, LocalDateTime endTime);
-    BookingDtoView confirmBooking(Long bookingId);
+    BookingDtoView updateBooking(int bookingId, BookingDtoForm bookingDtoForm);
+    BookingDtoView getBooking(int bookingId);
+    List<BookingDtoView> getAllBookings();
+    boolean deleteBooking(int bookingId);
+    List<Booking> findOverlappingBookings(int facilityId, LocalDateTime startTime, LocalDateTime endTime);
+    BookingDtoView confirmBooking(int bookingId);
 }

@@ -61,14 +61,14 @@ public class MemberController {
 
     @Operation(summary = "Get member Profile", description = "Gets the member profile by id")
     @GetMapping("/{id}/")
-    public ResponseEntity<MemberDtoView> getMemberById(@PathVariable Long id){
+    public ResponseEntity<MemberDtoView> getMemberById(@PathVariable int id){
         MemberDtoView responseBody = memberService.getMember(id);
         return ResponseEntity.ok(responseBody);
     }
 
     @Operation(summary = "Delete member Profile", description = "Deletes the user profile by id")
     @DeleteMapping("/{id}/remove")
-    public ResponseEntity<MemberDtoView> removeMember(@PathVariable Long id){
+    public ResponseEntity<MemberDtoView> removeMember(@PathVariable int id){
         memberService.deleteMember(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
