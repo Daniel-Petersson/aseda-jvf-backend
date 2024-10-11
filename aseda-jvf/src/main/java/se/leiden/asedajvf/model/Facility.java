@@ -27,4 +27,8 @@ public class Facility {
     private String description;
     @OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Booking> bookings = new ArrayList<>();
+    @OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OpeningHours> openingHours = new ArrayList<>();
+    @OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<FacilityAvailability> availabilities = new ArrayList<>();
 }
