@@ -21,12 +21,11 @@ RECTANGLE Booking {
   + status: BookingStatus
 }
 
-RECTANGLE Course {
-  + course_id: int
-  + course_name: varchar
-  + course_description: text
-  + start_date: datetime
-  + end_date: datetime
+RECTANGLE Facility {
+  + facility_id: int
+  + facility_name: varchar
+  + facility_description: text
+  + opening_hours: varchar
 }
 
 RECTANGLE ShootingSession {
@@ -50,6 +49,17 @@ RECTANGLE PaymentLog {
   + payment_date: LocalDate
   + amount: BigDecimal
   + payment_method: String
+}
+
+RECTANGLE News {
+  + news_id: int
+  + title: varchar
+  + description: text
+  + image_url: varchar
+  + file_url: varchar
+  + date_created: datetime
+  + date_updated: datetime
+  + created_by: int
 }
 
 enum Role {
@@ -78,7 +88,7 @@ RECTANGLE IBookingRepository {
   + save()
 }
 
-RECTANGLE ICourseRepository {
+RECTANGLE IFacilityRepository {
   + find_all()
   + find_by_id()
   + save()
@@ -99,6 +109,13 @@ RECTANGLE PaymentLogRepository {
   + save()
 }
 
+RECTANGLE INewsRepository {
+  + find_all()
+  + find_by_id()
+  + save()
+  + find_by_member_id()
+}
+
 RECTANGLE MemberService {
   + register()
   + login()
@@ -110,9 +127,9 @@ RECTANGLE BookingService {
   + cancel_booking()
 }
 
-RECTANGLE CourseService {
-  + register_course()
-  + update_course()
+RECTANGLE FacilityService {
+  + register_facility()
+  + update_facility()
 }
 
 RECTANGLE ShootingSessionService {
@@ -130,6 +147,13 @@ RECTANGLE PaymentLogService {
   + get_payments_by_member()
 }
 
+RECTANGLE NewsService {
+  + create_news()
+  + update_news()
+  + delete_news()
+  + get_all_news()
+}
+
 RECTANGLE MemberController {
   + register()
   + login()
@@ -141,9 +165,9 @@ RECTANGLE BookingController {
   + cancel_booking()
 }
 
-RECTANGLE CourseController {
+RECTANGLE FacilityController {
   + register()
-  + update_course()
+  + update_facility()
 }
 
 RECTANGLE ShootingSessionController {
@@ -161,35 +185,49 @@ RECTANGLE PaymentLogController {
   + view_payments()
 }
 
+RECTANGLE NewsController {
+  + create_news()
+  + update_news()
+  + delete_news()
+  + view_news()
+}
+
 Member --|> PaymentLog : has payments
 Member --|> Booking : makes
 Member --|> ShootingResult : has
 Member --|> ShootingSession : leads
+Member --|> News : creates
 
 PaymentLog --> Member : belongs to
+News --> Member : created by
 
 Booking --> ShootingSession : occurs in
 ShootingSession --> ShootingResult : contains
 ShootingResult --> TargetType : uses
 
+Booking --> Facility : made for
+
+IFacilityRepository --> Facility : manages
 IMemberRepository --> Member : works with
 IBookingRepository --> Booking : manages
-ICourseRepository --> Course : handles
 IShootingSessionRepository --> ShootingSession : handles
 IShootingResultRepository --> ShootingResult : handles
 PaymentLogRepository --> PaymentLog : manages
+INewsRepository --> News : manages
 
 MemberService --> IMemberRepository : uses
 BookingService --> IBookingRepository : uses
-CourseService --> ICourseRepository : uses
+FacilityService --> IFacilityRepository : uses
 ShootingSessionService --> IShootingSessionRepository : uses
 ShootingResultService --> IShootingResultRepository : uses
 PaymentLogService --> PaymentLogRepository : uses
+NewsService --> INewsRepository : uses
 
 MemberController --> MemberService : delegates to
 BookingController --> BookingService : delegates to
-CourseController --> CourseService : delegates to
+FacilityController --> FacilityService : delegates to
 ShootingSessionController --> ShootingSessionService : delegates to
 ShootingResultController --> ShootingResultService : delegates to
 PaymentLogController --> PaymentLogService : delegates to
+NewsController --> NewsService : delegates to
 @enduml
