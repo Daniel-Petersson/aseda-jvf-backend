@@ -2,6 +2,8 @@ package se.leiden.asedajvf.dto;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -9,8 +11,7 @@ import lombok.*;
 @Builder
 public class OpeningHoursDto {
     private int facilityId;
-    private String dayOfWeek;
-    private String openingTime; // ISO 8601 format
-    private String closingTime; // ISO 8601 format
+    private LocalDateTime openingTime; 
+    private LocalDateTime closingTime; 
     private int assignedLeaderId;
 }

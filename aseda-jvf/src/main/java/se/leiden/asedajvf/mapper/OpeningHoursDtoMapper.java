@@ -6,9 +6,6 @@ import se.leiden.asedajvf.model.Facility;
 import se.leiden.asedajvf.model.Member;
 import se.leiden.asedajvf.model.OpeningHours;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-
 @Component
 public class OpeningHoursDtoMapper {
 
@@ -18,9 +15,8 @@ public class OpeningHoursDtoMapper {
         }
         return OpeningHoursDto.builder()
                 .facilityId(openingHours.getFacility().getId())
-                .dayOfWeek(openingHours.getDayOfWeek())
-                .openingTime(openingHours.getOpeningTime().toString())
-                .closingTime(openingHours.getClosingTime().toString())
+                .openingTime(openingHours.getOpeningTime())
+                .closingTime(openingHours.getClosingTime())
                 .assignedLeaderId(openingHours.getAssignedLeader().getId())
                 .build();
     }
@@ -28,9 +24,8 @@ public class OpeningHoursDtoMapper {
     public OpeningHours toOpeningHours(OpeningHoursDto dto, Facility facility, Member assignedLeader) {
         return OpeningHours.builder()
                 .facility(facility)
-                .dayOfWeek(dto.getDayOfWeek())
-                .openingTime(LocalTime.parse(dto.getOpeningTime(), DateTimeFormatter.ISO_TIME))
-                .closingTime(LocalTime.parse(dto.getClosingTime(), DateTimeFormatter.ISO_TIME))
+                .openingTime(dto.getOpeningTime())
+                .closingTime(dto.getClosingTime())
                 .assignedLeader(assignedLeader)
                 .build();
     }
