@@ -3,9 +3,7 @@ package se.leiden.asedajvf.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import se.leiden.asedajvf.enums.Role;
 
 import java.time.LocalDate;
@@ -56,4 +54,6 @@ public class Member {
     private List<PaymentLog> paymentLogs = new ArrayList<>();
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Booking> bookings = new ArrayList<>();
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<News> news = new ArrayList<>();
 }

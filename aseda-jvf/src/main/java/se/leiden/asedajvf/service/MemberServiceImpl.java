@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import se.leiden.asedajvf.dto.MemberDtoForm;
 import se.leiden.asedajvf.dto.MemberDtoView;
+import se.leiden.asedajvf.dto.MemberUpdateDtoForm;
 import se.leiden.asedajvf.enums.Role;
 import se.leiden.asedajvf.exeptions.AuthenticationException;
 import se.leiden.asedajvf.exeptions.DataNotFoundException;
@@ -15,7 +16,9 @@ import se.leiden.asedajvf.repository.MemberRepository;
 import se.leiden.asedajvf.util.CustomPasswordEncoder;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Validated
 @Service
@@ -113,6 +116,13 @@ public class MemberServiceImpl implements MemberService {
 	}
 
 	@Override
+	public List<MemberDtoView> getAllMembers() {
+		return memberRepository.findAll().stream()
+			.map(MemberMapper::toDto)
+			.collect(Collectors.toList());
+	}
+
+	@Override
 	@Transactional
 	public boolean deleteMember(int memberId) {
 		if (!memberRepository.existsById(memberId)) {
@@ -120,5 +130,57 @@ public class MemberServiceImpl implements MemberService {
 		}
 		memberRepository.deleteById(memberId);
 		return true;
+	}
+	@Override
+	@Transactional
+	public MemberDtoView updateMemberById(int id, MemberUpdateDtoForm memberUpdateDtoForm) {
+		if (memberUpdateDtoForm == null) {
+			throw new IllegalArgumentException("MemberUpdateDtoForm is null");
+		}
+		
+		Member existingMember = memberRepository.findById(id)
+			.orElseThrow(() -> new DataNotFoundException("Member with id: " + id + " not found"));
+
+		// Update fields if they are provided
+		if (memberUpdateDtoForm.getEmail() != null) {
+			existingMember.setEmail(memberUpdateDtoForm.getEmail());
+		}
+		if (memberUpdateDtoForm.getFirstName() != null) {
+			existingMember.setFirstName(memberUpdateDtoForm.getFirstName());
+		}
+		if (memberUpdateDtoForm.getLastName() != null) {
+			existingMember.setLastName(memberUpdateDtoForm.getLastName());
+		}
+		if (memberUpdateDtoForm.getAddress() != null) {
+			existingMember.setAddress(memberUpdateDtoForm.getAddress());
+		}
+		if (memberUpdateDtoForm.getCity() != null) {
+			existingMember.setCity(memberUpdateDtoForm.getCity());
+		}
+		if (memberUpdateDtoForm.getPostalCode() != null) {
+			existingMember.setPostalCode(memberUpdateDtoForm.getPostalCode());
+		}
+		if (memberUpdateDtoForm.getPhone() != null) {
+			existingMember.setPhone(memberUpdateDtoForm.getPhone());
+		}
+		if (memberUpdateDtoForm.getPassword() != null && !memberUpdateDtoForm.getPassword().isEmpty()) {
+			existingMember.setPassword(customPasswordEncoder.encode(memberUpdateDtoForm.getPassword()));
+		}
+		if (memberUpdateDtoForm.getRole() != null && !memberUpdateDtoForm.getRole().equals(existingMember.getRole())) {
+			existingMember.setRole(memberUpdateDtoForm.getRole());
+		}
+
+		if (memberUpdateDtoForm.isActive() != existingMember.isActive()) {
+			existingMember.setActive(memberUpdateDtoForm.isActive());
+		}
+
+		if (memberUpdateDtoForm.getMembershipPaidUntil() != null) {
+			existingMember.setMembershipPaidUntil(memberUpdateDtoForm.getMembershipPaidUntil());
+		}
+
+		existingMember.setDateUpdated(LocalDate.now());
+
+		Member updatedMember = memberRepository.save(existingMember);
+		return MemberMapper.toDto(updatedMember);
 	}
 }
