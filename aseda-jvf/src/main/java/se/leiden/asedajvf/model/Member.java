@@ -56,4 +56,6 @@ public class Member {
     private List<Booking> bookings = new ArrayList<>();
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<News> news = new ArrayList<>();
+    @OneToMany(mappedBy = "assignedLeader", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OpeningHours> openingHours = new ArrayList<>();
 }
