@@ -11,8 +11,11 @@ import org.springframework.web.bind.annotation.*;
 import se.leiden.asedajvf.dto.AuthenticationDto;
 import se.leiden.asedajvf.dto.MemberDtoForm;
 import se.leiden.asedajvf.dto.MemberDtoView;
+import se.leiden.asedajvf.dto.MemberUpdateDtoForm;
 import se.leiden.asedajvf.exeptions.AuthenticationException;
 import se.leiden.asedajvf.service.MemberService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/members")
@@ -53,9 +56,9 @@ public class MemberController {
     }
 
     @Operation(summary = "Update member profile", description = "Updates existing member profile")
-    @PutMapping("/updateMember")
-    public ResponseEntity<MemberDtoView> updateMember(@RequestBody @Valid MemberDtoForm memberDtoForm){
-        MemberDtoView responseBody = memberService.updateMember(memberDtoForm);
+    @PutMapping("/{id}")
+    public ResponseEntity<MemberDtoView> updateMemberById(@PathVariable int id, @RequestBody @Valid MemberUpdateDtoForm memberUpdateDtoForm) {
+        MemberDtoView responseBody = memberService.updateMemberById(id, memberUpdateDtoForm);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(responseBody);
     }
 
@@ -68,9 +71,18 @@ public class MemberController {
 
     @Operation(summary = "Delete member Profile", description = "Deletes the user profile by id")
     @DeleteMapping("/{id}/remove")
-    public ResponseEntity<MemberDtoView> removeMember(@PathVariable int id){
+    public ResponseEntity<Void> removeMember(@PathVariable int id) {
         memberService.deleteMember(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
+    @Operation(summary = "Get all members", description = "Retrieves a list of all members")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved list of members")
+    })
+    @GetMapping("/")
+    public ResponseEntity<List<MemberDtoView>> getAllMembers() {
+        List<MemberDtoView> members = memberService.getAllMembers();
+        return ResponseEntity.ok(members);
+    }
 }

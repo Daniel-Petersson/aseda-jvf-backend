@@ -54,4 +54,6 @@ public class Member {
     private List<PaymentLog> paymentLogs = new ArrayList<>();
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Booking> bookings = new ArrayList<>();
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<News> news = new ArrayList<>();
 }
