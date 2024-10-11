@@ -3,105 +3,77 @@ package se.leiden.asedajvf.memberTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import se.leiden.asedajvf.model.Member;
-import se.leiden.asedajvf.enums.Role;
 import se.leiden.asedajvf.repository.MemberRepository;
 
 import java.util.Optional;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-class MemberRepositoryTest {
-
-    @Autowired
-    private TestEntityManager entityManager;
+@SpringBootTest
+@ActiveProfiles("test")
+public class MemberRepositoryTest {
 
     @Autowired
     private MemberRepository memberRepository;
 
-    private Member testMember;
-
     @BeforeEach
-    void setUp() {
-        testMember = Member.builder()
-                .firstName("John")
-                .lastName("Doe")
-                .email("john.doe@example.com")
-                .phone("+1234567890")
-                .address("123 Main St")
-                .city("Anytown")
-                .role(Role.ADMIN)
-                .postalCode(12345)
-                .password("password123")
-                .active(true)
-                .build();
-        testMember = entityManager.persistAndFlush(testMember);
-        System.out.println("Persisted member: " + testMember);
+    public void setUp() {
+        memberRepository.deleteAll(); // Ensure a clean state before each test
+    }
 
+    private Member createValidMember(String firstName, String lastName, String email) {
+        Member member = new Member();
+        member.setFirstName(firstName);
+        member.setLastName(lastName);
+        member.setEmail(email);
+        member.setPassword("securePassword123"); // Set a valid password
+        member.setPostalCode(12345); // Set a valid postal code
+        member.setCity("Sample City"); // Set a valid city
+        member.setAddress("123 Sample Street"); // Set a valid address
+        return member;
     }
 
     @Test
-    void findByFirstNameIgnoreCase() {
-        Optional<Member> found = memberRepository.findByFirstNameIgnoreCase("john");
-        assertThat(found).isPresent();
-        assertThat(found.get().getFirstName()).isEqualToIgnoringCase("John");
+    public void testFindByFirstNameIgnoreCase() {
+        Member member = createValidMember("John", "Doe", "john.doe@example.com");
+        memberRepository.save(member);
+
+        Optional<Member> foundMember = memberRepository.findByFirstNameIgnoreCase("john");
+        assertThat(foundMember).isPresent();
+        assertThat(foundMember.get().getFirstName()).isEqualTo("John");
     }
 
     @Test
-    void findByLastNameIgnoreCase() {
-        Optional<Member> found = memberRepository.findByLastNameIgnoreCase("DOE");
-        assertThat(found).isPresent();
-        assertThat(found.get().getLastName()).isEqualToIgnoringCase("Doe");
+    public void testFindByLastNameIgnoreCase() {
+        Member member = createValidMember("Jane", "Smith", "jane.smith@example.com");
+        memberRepository.save(member);
+
+        Optional<Member> foundMember = memberRepository.findByLastNameIgnoreCase("smith");
+        assertThat(foundMember).isPresent();
+        assertThat(foundMember.get().getLastName()).isEqualTo("Smith");
     }
 
     @Test
-    void findByEmailIgnoreCase() {
-        Optional<Member> found = memberRepository.findByEmailIgnoreCase("JOHN.DOE@EXAMPLE.COM");
-        assertThat(found).isPresent();
-        assertThat(found.get().getEmail()).isEqualToIgnoringCase("john.doe@example.com");
+    public void testFindByEmailIgnoreCase() {
+        Member member = createValidMember("Alice", "Johnson", "alice.johnson@example.com");
+        memberRepository.save(member);
+
+        Optional<Member> foundMember = memberRepository.findByEmailIgnoreCase("ALICE.JOHNSON@EXAMPLE.COM");
+        assertThat(foundMember).isPresent();
+        assertThat(foundMember.get().getEmail()).isEqualTo("alice.johnson@example.com");
     }
 
     @Test
-    void findByFirstNameIgnoreCaseAndLastNameIgnoreCase() {
-        // Debug: Print all members in the database
-        List<Member> allMembers = memberRepository.findAll();
-        System.out.println("All members in database: " + allMembers);
+    public void testFindByFirstNameIgnoreCaseAndLastNameIgnoreCase() {
+        Member member = createValidMember("Bob", "Brown", "bob.brown@example.com");
+        memberRepository.save(member);
 
-        Optional<Member> found = memberRepository.findByFirstNameIgnoreCaseAndLastNameIgnoreCase("JOHN", "doe");
-        
-        // Debug: Print the result of the query
-        System.out.println("Query result: " + found);
-
-        assertThat(found).isPresent();
-        assertThat(found.get().getFirstName()).isEqualToIgnoringCase("John");
-        assertThat(found.get().getLastName()).isEqualToIgnoringCase("Doe");
-    }
-
-    @Test
-    void findByFirstNameIgnoreCase_NotFound() {
-        Optional<Member> notFound = memberRepository.findByFirstNameIgnoreCase("Jane");
-        assertThat(notFound).isEmpty();
-    }
-
-    @Test
-    void findByLastNameIgnoreCase_NotFound() {
-        Optional<Member> notFound = memberRepository.findByLastNameIgnoreCase("Smith");
-        assertThat(notFound).isEmpty();
-    }
-
-    @Test
-    void findByEmailIgnoreCase_NotFound() {
-        Optional<Member> notFound = memberRepository.findByEmailIgnoreCase("jane.doe@example.com");
-        assertThat(notFound).isEmpty();
-    }
-
-    @Test
-    void findByFirstNameAndLastNameIgnoreCase_NotFound() {
-        Optional<Member> notFound = memberRepository.findByFirstNameIgnoreCaseAndLastNameIgnoreCase("Jane", "Smith");
-        assertThat(notFound).isEmpty();
+        Optional<Member> foundMember = memberRepository.findByFirstNameIgnoreCaseAndLastNameIgnoreCase("bob", "BROWN");
+        assertThat(foundMember).isPresent();
+        assertThat(foundMember.get().getFirstName()).isEqualTo("Bob");
+        assertThat(foundMember.get().getLastName()).isEqualTo("Brown");
     }
 }

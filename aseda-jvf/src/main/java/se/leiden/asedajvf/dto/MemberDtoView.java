@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Setter
 @Builder
 public class MemberDtoView {
-    private Long id;
+    private int id;
     private String firstName;
     private String lastName;
     private String email;
