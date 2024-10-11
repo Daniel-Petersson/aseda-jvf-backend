@@ -21,13 +21,13 @@ public class JwtService {
         this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     }
 
-    public String createToken(String username, int userId, Role role) {
+    public String createToken(String username, int memberId, Role role) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMilliseconds);
 
         return Jwts.builder()
                 .setSubject(username)
-                .claim("userId", userId)
+                .claim("memberId", memberId)
                 .claim("role", role.name())
                 .setIssuedAt(now)
                 .setExpiration(validity)

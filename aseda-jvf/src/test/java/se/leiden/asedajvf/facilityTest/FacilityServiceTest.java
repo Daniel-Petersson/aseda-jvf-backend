@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import se.leiden.asedajvf.dto.FacilityDto;
 import se.leiden.asedajvf.exeptions.ResourceNotFoundException;
 import se.leiden.asedajvf.model.Facility;
 import se.leiden.asedajvf.repository.FacilityRepository;
@@ -38,7 +39,7 @@ class FacilityServiceTest {
 
         when(facilityRepository.findAll()).thenReturn(expectedFacilities);
 
-        List<Facility> actualFacilities = facilityService.getAllFacilities();
+        List<FacilityDto> actualFacilities = facilityService.getAllFacilities();
 
         assertEquals(expectedFacilities, actualFacilities);
         verify(facilityRepository, times(1)).findAll();
@@ -51,7 +52,7 @@ class FacilityServiceTest {
 
         when(facilityRepository.findById(facilityId)).thenReturn(Optional.of(expectedFacility));
 
-        Facility actualFacility = facilityService.getFacilityById(facilityId);
+        FacilityDto actualFacility = facilityService.getFacilityById(facilityId);
 
         assertEquals(expectedFacility, actualFacility);
         verify(facilityRepository, times(1)).findById(facilityId);
@@ -74,7 +75,7 @@ class FacilityServiceTest {
 
         when(facilityRepository.findByNameIgnoreCase(facilityName)).thenReturn(Optional.of(expectedFacility));
 
-        Facility actualFacility = facilityService.getFacilityByFacilityName(facilityName);
+        FacilityDto actualFacility = facilityService.getFacilityByFacilityName(facilityName);
 
         assertEquals(expectedFacility, actualFacility);
         verify(facilityRepository, times(1)).findByNameIgnoreCase(facilityName);

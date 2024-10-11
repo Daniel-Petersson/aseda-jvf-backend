@@ -25,6 +25,7 @@ public class BookingMapper {
             return null;
         }
         return BookingDtoView.builder()
+                .id(booking.getId())
                 .title(booking.getTitle())
                 .facilityId(booking.getFacility().getId())
                 .memberId(booking.getMember().getId())

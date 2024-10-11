@@ -1,5 +1,6 @@
 package se.leiden.asedajvf.bookingTest;
 
+import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -8,6 +9,7 @@ import org.mockito.MockitoAnnotations;
 import se.leiden.asedajvf.dto.BookingDtoForm;
 import se.leiden.asedajvf.dto.BookingDtoView;
 import se.leiden.asedajvf.exeptions.DataNotFoundException;
+import se.leiden.asedajvf.exeptions.UnauthorizedException;
 import se.leiden.asedajvf.mapper.BookingMapper;
 import se.leiden.asedajvf.model.Booking;
 import se.leiden.asedajvf.model.Facility;
@@ -16,6 +18,7 @@ import se.leiden.asedajvf.repository.BookingRepository;
 import se.leiden.asedajvf.repository.FacilityRepository;
 import se.leiden.asedajvf.repository.MemberRepository;
 import se.leiden.asedajvf.service.BookingServiceImpl;
+import se.leiden.asedajvf.service.JwtService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -40,12 +43,22 @@ public class BookingServiceTest {
     @Mock
     private BookingMapper bookingMapper;
 
+    @Mock
+    private JwtService jwtService;
+
     @InjectMocks
     private BookingServiceImpl bookingService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        
+        // Mocking JwtService to return a valid Claims object
+        Claims claims = mock(Claims.class);
+        when(claims.get("memberId", Integer.class)).thenReturn(1); // Ensure this matches the member ID in the booking
+        when(claims.get("role", String.class)).thenReturn("USER");
+        
+        when(jwtService.validateTokenAndGetClaims(anyString())).thenReturn(claims);
     }
 
     @Test
@@ -75,7 +88,7 @@ public class BookingServiceTest {
     }
 
     @Test
-    void updateBooking_Success() {
+    void updateBooking_Success() throws UnauthorizedException {
         int bookingId = 1;
         BookingDtoForm form = new BookingDtoForm();
         form.setFacilityId(1);
@@ -84,8 +97,11 @@ public class BookingServiceTest {
         form.setEndTime(LocalDateTime.now().plusHours(1));
 
         Booking existingBooking = new Booking();
-        Facility facility = new Facility();
         Member member = new Member();
+        member.setId(1); // Set member ID
+        existingBooking.setMember(member); // Set member in booking
+
+        Facility facility = new Facility();
         Booking updatedBooking = new Booking();
         BookingDtoView expectedView = new BookingDtoView();
 
@@ -96,10 +112,97 @@ public class BookingServiceTest {
         when(bookingRepository.save(any(Booking.class))).thenReturn(updatedBooking);
         when(bookingMapper.toDto(any(Booking.class))).thenReturn(expectedView);
 
-        BookingDtoView result = bookingService.updateBooking(bookingId, form);
+        String token = "validToken"; // Mock or create a valid token
+
+        BookingDtoView result = bookingService.updateBooking(bookingId, form, token);
 
         assertNotNull(result);
         verify(bookingRepository).save(any(Booking.class));
+    }
+
+    @Test
+    void updateBooking_AdminUser() throws UnauthorizedException {
+        int bookingId = 1;
+        BookingDtoForm form = new BookingDtoForm();
+        form.setFacilityId(1);
+        form.setMemberId(2); // Different memberId to simulate another user
+        form.setStartTime(LocalDateTime.now());
+        form.setEndTime(LocalDateTime.now().plusHours(1));
+
+        Booking existingBooking = new Booking();
+        Member member = new Member();
+        member.setId(1); // Original member ID
+        existingBooking.setMember(member);
+
+        Booking updatedBooking = new Booking();
+        BookingDtoView expectedView = new BookingDtoView();
+
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(existingBooking));
+        when(bookingMapper.toBooking(any(BookingDtoForm.class))).thenReturn(updatedBooking);
+        when(bookingRepository.save(any(Booking.class))).thenReturn(updatedBooking);
+        when(bookingMapper.toDto(any(Booking.class))).thenReturn(expectedView);
+
+        // Mock the token for admin
+        Claims claims = mock(Claims.class);
+        when(claims.get("memberId", Integer.class)).thenReturn(2); // Different memberId
+        when(claims.get("role", String.class)).thenReturn("ADMIN");
+        when(jwtService.validateTokenAndGetClaims(anyString())).thenReturn(claims);
+
+        String token = "adminToken"; // Mock or create a valid admin token
+
+        BookingDtoView result = bookingService.updateBooking(bookingId, form, token);
+
+        assertNotNull(result);
+        verify(bookingRepository).save(any(Booking.class));
+    }
+
+    @Test
+    void updateBooking_AuthorizedUser() throws UnauthorizedException {
+        int bookingId = 1;
+        BookingDtoForm form = new BookingDtoForm();
+        form.setFacilityId(1);
+        form.setMemberId(1);
+        form.setStartTime(LocalDateTime.now());
+        form.setEndTime(LocalDateTime.now().plusHours(1));
+
+        Booking existingBooking = new Booking();
+        Member member = new Member();
+        member.setId(1); // Set member ID
+        existingBooking.setMember(member); // Set member in booking
+
+        Booking updatedBooking = new Booking();
+        BookingDtoView expectedView = new BookingDtoView();
+
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(existingBooking));
+        when(bookingMapper.toBooking(any(BookingDtoForm.class))).thenReturn(updatedBooking);
+        when(bookingRepository.save(any(Booking.class))).thenReturn(updatedBooking);
+        when(bookingMapper.toDto(any(Booking.class))).thenReturn(expectedView);
+
+        String token = "validToken"; // Mock or create a valid token
+
+        BookingDtoView result = bookingService.updateBooking(bookingId, form, token);
+
+        assertNotNull(result);
+        verify(bookingRepository).save(any(Booking.class));
+    }
+
+    @Test
+    void updateBooking_UnauthorizedUser() {
+        int bookingId = 1;
+        BookingDtoForm form = new BookingDtoForm();
+        form.setFacilityId(1);
+        form.setMemberId(2); // Different memberId
+        form.setStartTime(LocalDateTime.now());
+        form.setEndTime(LocalDateTime.now().plusHours(1));
+
+        Booking existingBooking = new Booking();
+        existingBooking.setMember(new Member()); // Use a constructor that exists
+
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(existingBooking));
+
+        String token = "invalidToken"; // Mock or create an invalid token
+
+        assertThrows(UnauthorizedException.class, () -> bookingService.updateBooking(bookingId, form, token));
     }
 
     @Test
@@ -127,14 +230,19 @@ public class BookingServiceTest {
     }
 
     @Test
-    void deleteBooking_Success() {
+    void deleteBooking_Success() throws UnauthorizedException {
         int bookingId = 1;
         Booking booking = new Booking();
+        Member member = new Member();
+        member.setId(1); // Set member ID
+        booking.setMember(member); // Set member in booking
 
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
         doNothing().when(bookingRepository).delete(booking);
 
-        boolean result = bookingService.deleteBooking(bookingId);
+        String token = "validToken"; // Mock or create a valid token
+
+        boolean result = bookingService.deleteBooking(bookingId, token);
 
         assertTrue(result);
         verify(bookingRepository).findById(bookingId);
@@ -142,14 +250,60 @@ public class BookingServiceTest {
     }
 
     @Test
-    void deleteBooking_NotFound() {
+    void deleteBooking_AuthorizedUser() throws UnauthorizedException {
         int bookingId = 1;
+        Booking booking = new Booking();
+        Member member = new Member();
+        member.setId(1); // Set member ID
+        booking.setMember(member); // Set member in booking
 
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.empty());
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        doNothing().when(bookingRepository).delete(booking);
 
-        assertThrows(DataNotFoundException.class, () -> bookingService.deleteBooking(bookingId));
-        verify(bookingRepository).findById(bookingId);
-        verify(bookingRepository, never()).delete(any(Booking.class));
+        String token = "validToken"; // Mock or create a valid token
+
+        boolean result = bookingService.deleteBooking(bookingId, token);
+
+        assertTrue(result);
+        verify(bookingRepository).delete(booking);
+    }
+
+    @Test
+    void deleteBooking_AdminUser() throws UnauthorizedException {
+        int bookingId = 1;
+        Booking booking = new Booking();
+        Member member = new Member();
+        member.setId(1); // Set member ID
+        booking.setMember(member); // Set member in booking
+
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        doNothing().when(bookingRepository).delete(booking);
+
+        // Mocka token för admin
+        Claims claims = mock(Claims.class);
+        when(claims.get("memberId", Integer.class)).thenReturn(2); // Olika medlems-ID
+        when(claims.get("role", String.class)).thenReturn("ADMIN");
+        when(jwtService.validateTokenAndGetClaims(anyString())).thenReturn(claims);
+
+        String token = "adminToken"; // Mocka eller skapa en giltig admin-token
+
+        boolean result = bookingService.deleteBooking(bookingId, token);
+
+        assertTrue(result);
+        verify(bookingRepository).delete(booking);
+    }
+
+    @Test
+    void deleteBooking_UnauthorizedUser() {
+        int bookingId = 1;
+        Booking booking = new Booking();
+        booking.setMember(new Member()); // Use a constructor that exists
+
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+
+        String token = "invalidToken"; // Mock or create an invalid token
+
+        assertThrows(UnauthorizedException.class, () -> bookingService.deleteBooking(bookingId, token));
     }
 
     @Test

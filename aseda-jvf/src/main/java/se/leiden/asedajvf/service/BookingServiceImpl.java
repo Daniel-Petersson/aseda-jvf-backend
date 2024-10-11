@@ -1,12 +1,15 @@
 package se.leiden.asedajvf.service;
 
+import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import se.leiden.asedajvf.dto.BookingDtoForm;
 import se.leiden.asedajvf.dto.BookingDtoView;
 import se.leiden.asedajvf.enums.BookingStatus;
+import se.leiden.asedajvf.enums.Role;
 import se.leiden.asedajvf.exeptions.DataNotFoundException;
+import se.leiden.asedajvf.exeptions.UnauthorizedException;
 import se.leiden.asedajvf.mapper.BookingMapper;
 import se.leiden.asedajvf.model.Booking;
 import se.leiden.asedajvf.repository.BookingRepository;
@@ -22,7 +25,8 @@ public class BookingServiceImpl implements BookingService {
 
     private final MemberRepository memberRepository;
     private final BookingRepository bookingRepository;
-    private final BookingMapper bookingMapper; // Add this line
+    private final BookingMapper bookingMapper;
+    private final JwtService jwtService;
 
     @Override
     @Transactional
@@ -50,20 +54,28 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public BookingDtoView updateBooking(int bookingId, BookingDtoForm bookingDtoForm) {
+    public BookingDtoView updateBooking(int bookingId, BookingDtoForm bookingDtoForm, String token) throws UnauthorizedException {
         if (bookingDtoForm == null) {
             throw new IllegalArgumentException("bookingDtoForm is null");
         }
+
         Booking booking = bookingRepository.findById(bookingId)
             .orElseThrow(() -> new DataNotFoundException("Booking not found"));
-        
-        // Update booking fields
+
+        Claims claims = jwtService.validateTokenAndGetClaims(token);
+        int memberId = claims.get("memberId", Integer.class);
+        String role = claims.get("role", String.class);
+
+        if (booking.getMember().getId() != memberId && !Role.ADMIN.name().equals(role)) {
+            throw new UnauthorizedException("You are not authorized to update this booking");
+        }
+
         Booking updatedBooking = bookingMapper.toBooking(bookingDtoForm);
         updatedBooking.setId(bookingId);
         updatedBooking.setStatus(booking.getStatus());
-        
+
         Booking savedBooking = bookingRepository.save(updatedBooking);
-        return bookingMapper.toDto(savedBooking); // Use instance method
+        return bookingMapper.toDto(savedBooking);
     }
 
     @Override
@@ -83,13 +95,20 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public boolean deleteBooking(int id) {
-        return bookingRepository.findById(id)
-            .map(booking -> {
-                bookingRepository.delete(booking);
-                return true;
-            })
+    public boolean deleteBooking(int id, String token) throws UnauthorizedException {
+        Booking booking = bookingRepository.findById(id)
             .orElseThrow(() -> new DataNotFoundException("Booking with id: " + id + " does not exist"));
+
+        Claims claims = jwtService.validateTokenAndGetClaims(token);
+        int memberId = claims.get("memberId", Integer.class);
+        String role = claims.get("role", String.class);
+
+        if (booking.getMember().getId() != memberId && !Role.ADMIN.name().equals(role)) {
+            throw new UnauthorizedException("You are not authorized to delete this booking");
+        }
+
+        bookingRepository.delete(booking);
+        return true;
     }
 
     @Override
@@ -120,4 +139,6 @@ public class BookingServiceImpl implements BookingService {
     // TODO: Add support for recurring bookings if needed
     // TODO: Implement a notification system for booking confirmations, reminders, and changes
     // TODO: Consider adding a waiting list feature for popular time slots
+    // TODO: Implement security measures to ensure only authorized users can create, update, or delete bookings
+    // TODO: Add role-based access control to protect admin-only routes
 }
