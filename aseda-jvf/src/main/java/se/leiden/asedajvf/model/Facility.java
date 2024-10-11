@@ -13,16 +13,17 @@ import java.util.List;
 @Getter
 @Setter
 @Data
+@Builder
 @Entity
 public class Facility {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
     @NotBlank(message = "Name is required")
     @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
     private String name;
     @NotBlank(message = "Description is required")
-    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
+    @Size(min = 2, max = 50, message = "Description must be between 2 and 50 characters")
     private String description;
     @OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Booking> bookings = new ArrayList<>();

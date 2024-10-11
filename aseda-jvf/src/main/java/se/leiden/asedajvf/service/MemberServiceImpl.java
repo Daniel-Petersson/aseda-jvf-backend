@@ -1,9 +1,5 @@
 package se.leiden.asedajvf.service;
 
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -66,25 +62,17 @@ public class MemberServiceImpl implements MemberService {
 
 	@Override
 	public String authenticateMember(String email, String password) throws AuthenticationException {
-		try {
-			Optional<Member> memberOptional = memberRepository.findByEmailIgnoreCase(email);
-			if (memberOptional.isPresent()) {
-				Member member = memberOptional.get();
-				if (customPasswordEncoder.matches(password, member.getPassword())) {
-					return jwtService.createToken(member.getFirstName(), member.getId(), member.getRole());
+		Optional<Member> memberOptional = memberRepository.findByEmailIgnoreCase(email);
+		if (memberOptional.isPresent()) {
+			Member member = memberOptional.get();
+			if (customPasswordEncoder.matches(password, member.getPassword())) {
+				String token = jwtService.createToken(member.getFirstName(), member.getId(), member.getRole());
+				if (token != null && !token.isEmpty()) {
+					return token;
 				}
 			}
-			throw new AuthenticationException("Invalid email or password");
-		} catch (AuthenticationException e) {
-			// Log the exception
-			// logger.error("Authentication failed for email: " + email, e);
-			// Rethrow the exception to be handled by the global exception handler
-			throw e;
-		} catch (Exception e) {
-			// Log any unexpected exceptions
-			// logger.error("Unexpected error during authentication for email: " + email, e);
-			throw new AuthenticationException("An unexpected error occurred during authentication");
 		}
+		throw new AuthenticationException("Invalid email or password");
 	}
 
 	@Transactional
@@ -118,19 +106,15 @@ public class MemberServiceImpl implements MemberService {
 	}
 
 	@Override
-	public MemberDtoView getMember(Long memberId) {
-		if (memberId == null) {throw new IllegalArgumentException("MemberId is null");}
-		Member member = memberRepository.findById(memberId)
+	public MemberDtoView getMember(int memberId) {
+		return memberRepository.findById(memberId)
+			.map(MemberMapper::toDto)
 			.orElseThrow(() -> new DataNotFoundException("Member with id: " + memberId + " does not exist"));
-		return MemberMapper.toDto(member);
 	}
 
 	@Override
 	@Transactional
-	public boolean deleteMember(Long memberId) {
-		if (memberId == null) {
-			throw new IllegalArgumentException("MemberId is null");
-		}
+	public boolean deleteMember(int memberId) {
 		if (!memberRepository.existsById(memberId)) {
 			throw new DataNotFoundException("Member with id: " + memberId + " does not exist");
 		}

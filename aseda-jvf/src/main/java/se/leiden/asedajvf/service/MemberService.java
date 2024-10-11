@@ -8,6 +8,6 @@ public interface MemberService {
     MemberDtoView registerMember(MemberDtoForm memberDtoForm);
     String authenticateMember(String email, String password) throws AuthenticationException;
     MemberDtoView updateMember(MemberDtoForm memberDtoForm);
-    MemberDtoView getMember(Long memberId);
-    boolean deleteMember(Long memberId);
+    MemberDtoView getMember(int memberId);
+    boolean deleteMember(int memberId);
 }

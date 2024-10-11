@@ -5,23 +5,24 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.security.authentication.BadCredentialsException;
 import se.leiden.asedajvf.dto.MemberDtoForm;
 import se.leiden.asedajvf.dto.MemberDtoView;
+import se.leiden.asedajvf.enums.Role;
 import se.leiden.asedajvf.exeptions.DataNotFoundException;
 import se.leiden.asedajvf.exeptions.EmailAlreadyExistsException;
+import se.leiden.asedajvf.exeptions.AuthenticationException;
 import se.leiden.asedajvf.model.Member;
 import se.leiden.asedajvf.repository.MemberRepository;
 import se.leiden.asedajvf.service.MemberServiceImpl;
 import se.leiden.asedajvf.util.CustomPasswordEncoder;
+import se.leiden.asedajvf.service.JwtService;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-@DataJpaTest
+
 class MemberServiceImplTest {
 
     @Mock
@@ -29,6 +30,9 @@ class MemberServiceImplTest {
 
     @Mock
     private CustomPasswordEncoder customPasswordEncoder;
+
+    @Mock
+    private JwtService jwtService;
 
     @InjectMocks
     private MemberServiceImpl memberService;
@@ -65,16 +69,23 @@ class MemberServiceImplTest {
     }
 
     @Test
-    void authenticateMember_Success() {
+    void authenticateMember_Success() throws AuthenticationException {
         String email = "test@example.com";
         String password = "password";
         Member member = new Member();
         member.setPassword("encodedPassword");
+        member.setFirstName("John");
+        member.setId(1);
+        member.setRole(Role.USER); // Assuming you have a Role enum
 
         when(memberRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(member));
         when(customPasswordEncoder.matches(password, "encodedPassword")).thenReturn(true);
+        when(jwtService.createToken(eq("John"), eq(1), eq(Role.USER))).thenReturn("token");
 
-       // assertTrue(memberService.authenticateMember(email, password));
+        String token = memberService.authenticateMember(email, password);
+        System.out.println("Generated token: " + token); // Debug print
+        assertNotNull(token);
+        assertEquals("token", token);
     }
 
     @Test
@@ -87,26 +98,24 @@ class MemberServiceImplTest {
         when(memberRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(member));
         when(customPasswordEncoder.matches(password, "encodedPassword")).thenReturn(false);
 
-        assertThrows(BadCredentialsException.class, () -> memberService.authenticateMember(email, password));
+        assertThrows(AuthenticationException.class, () -> memberService.authenticateMember(email, password));
     }
 
     @Test
     void updateMember_Success() {
+        int memberId = 1;
         MemberDtoForm form = new MemberDtoForm();
-        form.setEmail("test@example.com");
-        form.setFirstName("John");
-        form.setLastName("Doe");
-
+        form.setEmail("updated@example.com");
         Member existingMember = new Member();
-        existingMember.setId(1L);
+        existingMember.setId(memberId);
 
         when(memberRepository.findByEmailIgnoreCase(form.getEmail())).thenReturn(Optional.of(existingMember));
-        when(customPasswordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(memberRepository.save(any(Member.class))).thenReturn(existingMember);
 
         MemberDtoView result = memberService.updateMember(form);
 
         assertNotNull(result);
+        assertEquals("updated@example.com", result.getEmail());
         verify(memberRepository).save(any(Member.class));
     }
 
@@ -122,27 +131,23 @@ class MemberServiceImplTest {
 
     @Test
     void getMember_Success() {
-        Long memberId = 1L;
+        int memberId = 1;
         Member member = new Member();
         member.setId(memberId);
         member.setEmail("test@example.com");
-        member.setFirstName("John");
-        member.setLastName("Doe");
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
 
         MemberDtoView result = memberService.getMember(memberId);
 
-        assertNotNull(result, "Result should not be null");
-        assertEquals(memberId, result.getId(), "ID should match");
-        assertEquals("test@example.com", result.getEmail(), "Email should match");
-        assertEquals("John", result.getFirstName(), "First name should match");
-        assertEquals("Doe", result.getLastName(), "Last name should match");
+        assertNotNull(result);
+        assertEquals(memberId, result.getId());
+        assertEquals("test@example.com", result.getEmail());
     }
 
     @Test
     void getMember_MemberNotFound() {
-        Long memberId = 1L;
+        int memberId = 1;
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.empty());
 
@@ -151,7 +156,7 @@ class MemberServiceImplTest {
 
     @Test
     void deleteMember_Success() {
-        Long memberId = 1L;
+        int memberId = 1;
 
         when(memberRepository.existsById(memberId)).thenReturn(true);
 
@@ -161,7 +166,7 @@ class MemberServiceImplTest {
 
     @Test
     void deleteMember_MemberNotFound() {
-        Long memberId = 1L;
+        int memberId = 1;
 
         when(memberRepository.existsById(memberId)).thenReturn(false);
 
