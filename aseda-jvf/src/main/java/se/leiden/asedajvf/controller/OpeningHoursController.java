@@ -63,4 +63,14 @@ public class OpeningHoursController {
         List<OpeningHoursDto> openingHours = openingHoursService.getOpeningHoursByFacility(facilityId);
         return ResponseEntity.ok(openingHours);
     }
+
+    @Operation(summary = "Get all opening hours", description = "Retrieves all opening hours")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved all opening hours")
+    })
+    @GetMapping
+    public ResponseEntity<List<OpeningHoursDto>> getAllOpeningHours() {
+        List<OpeningHoursDto> openingHours = openingHoursService.getAllOpeningHours();
+        return ResponseEntity.ok(openingHours);
+    }
 }

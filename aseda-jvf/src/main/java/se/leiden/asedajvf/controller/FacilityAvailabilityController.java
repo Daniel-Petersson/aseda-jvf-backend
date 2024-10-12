@@ -1,15 +1,16 @@
 package se.leiden.asedajvf.controller;
 
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.leiden.asedajvf.dto.FacilityAvailabilityDto;
 import se.leiden.asedajvf.service.FacilityAvailabilityService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -63,5 +64,31 @@ public class FacilityAvailabilityController {
     public ResponseEntity<List<FacilityAvailabilityDto>> getAvailabilityByFacility(@PathVariable int facilityId) {
         List<FacilityAvailabilityDto> availabilities = facilityAvailabilityService.getAvailabilityByFacility(facilityId);
         return ResponseEntity.ok(availabilities);
+    }
+
+    @Operation(summary = "Check if a facility is available", description = "Checks if a facility is available for a specific time range")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully checked facility availability")
+    })
+    @GetMapping("check")
+    public ResponseEntity<Boolean> isFacilityAvailable(
+            @RequestParam int facilityId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+        boolean isAvailable = facilityAvailabilityService.isFacilityAvailable(facilityId, startTime, endTime);
+        return ResponseEntity.ok(isAvailable);
+    }
+
+    @Operation(summary = "Get available time slots", description = "Retrieves available time slots for a facility within a given date range")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved available time slots")
+    })
+    @GetMapping("slots")
+    public ResponseEntity<List<FacilityAvailabilityDto>> getAvailableTimeSlots(
+            @RequestParam int facilityId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+        List<FacilityAvailabilityDto> availableSlots = facilityAvailabilityService.getAvailableTimeSlots(facilityId, startDate, endDate);
+        return ResponseEntity.ok(availableSlots);
     }
 }

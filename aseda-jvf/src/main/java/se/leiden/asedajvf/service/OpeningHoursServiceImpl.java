@@ -1,20 +1,21 @@
 package se.leiden.asedajvf.service;
 
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import se.leiden.asedajvf.dto.OpeningHoursDto;
-import se.leiden.asedajvf.mapper.OpeningHoursDtoMapper;
 import se.leiden.asedajvf.model.Facility;
 import se.leiden.asedajvf.model.Member;
 import se.leiden.asedajvf.model.OpeningHours;
 import se.leiden.asedajvf.repository.FacilityRepository;
 import se.leiden.asedajvf.repository.MemberRepository;
 import se.leiden.asedajvf.repository.OpeningHoursRepository;
+import se.leiden.asedajvf.enums.Role;
+import se.leiden.asedajvf.mapper.OpeningHoursDtoMapper;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @Service
 public class OpeningHoursServiceImpl implements OpeningHoursService {
     private final OpeningHoursRepository repository;
@@ -22,12 +23,6 @@ public class OpeningHoursServiceImpl implements OpeningHoursService {
     private final MemberRepository memberRepository;
     private final OpeningHoursDtoMapper mapper;
 
-    public OpeningHoursServiceImpl(OpeningHoursRepository repository, FacilityRepository facilityRepository, MemberRepository memberRepository, OpeningHoursDtoMapper mapper) {
-        this.repository = repository;
-        this.facilityRepository = facilityRepository;
-        this.memberRepository = memberRepository;
-        this.mapper = mapper;
-    }
 
     @Override
     public List<OpeningHoursDto> getOpeningHoursByFacility(int facilityId) {
@@ -43,6 +38,10 @@ public class OpeningHoursServiceImpl implements OpeningHoursService {
         Member assignedLeader = memberRepository.findById(dto.getAssignedLeaderId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid member ID"));
 
+        if (assignedLeader.getRole() != Role.ADMIN && assignedLeader.getRole() != Role.INSTRUCTOR) {
+            throw new IllegalArgumentException("Assigned leader must be an ADMIN or INSTRUCTOR");
+        }
+
         OpeningHours openingHours = mapper.toOpeningHours(dto, facility, assignedLeader);
         repository.save(openingHours);
     }
@@ -57,10 +56,13 @@ public class OpeningHoursServiceImpl implements OpeningHoursService {
         Member assignedLeader = memberRepository.findById(dto.getAssignedLeaderId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid member ID"));
 
+        if (assignedLeader.getRole() != Role.ADMIN && assignedLeader.getRole() != Role.INSTRUCTOR) {
+            throw new IllegalArgumentException("Assigned leader must be an ADMIN or INSTRUCTOR");
+        }
+
         openingHours.setFacility(facility);
-        openingHours.setDayOfWeek(dto.getDayOfWeek());
-        openingHours.setOpeningTime(LocalTime.parse(dto.getOpeningTime(), DateTimeFormatter.ISO_TIME));
-        openingHours.setClosingTime(LocalTime.parse(dto.getClosingTime(), DateTimeFormatter.ISO_TIME));
+        openingHours.setOpeningTime(dto.getOpeningTime());
+        openingHours.setClosingTime(dto.getClosingTime());
         openingHours.setAssignedLeader(assignedLeader);
         repository.save(openingHours);
     }
@@ -68,5 +70,12 @@ public class OpeningHoursServiceImpl implements OpeningHoursService {
     @Override
     public void deleteOpeningHours(int openingId) {
         repository.deleteById(openingId);
+    }
+
+    @Override
+    public List<OpeningHoursDto> getAllOpeningHours() {
+        return repository.findAll().stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
     }
 }

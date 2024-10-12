@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface OpeningHoursService {
     List<OpeningHoursDto> getOpeningHoursByFacility(int facilityId);
+    List<OpeningHoursDto> getAllOpeningHours();
     void createOpeningHours(OpeningHoursDto dto);
     void updateOpeningHours(int openingId, OpeningHoursDto dto);
     void deleteOpeningHours(int openingId);

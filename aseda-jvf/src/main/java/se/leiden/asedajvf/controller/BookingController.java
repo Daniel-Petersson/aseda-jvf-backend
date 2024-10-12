@@ -26,12 +26,16 @@ public class BookingController {
     @Operation(summary = "Create a new booking", description = "Creates a new booking")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Booking created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input")
+            @ApiResponse(responseCode = "400", description = "The facility is not available for the requested time slot")
     })
     @PostMapping
-    public ResponseEntity<BookingDtoView> createBooking(@RequestBody BookingDtoForm bookingDtoForm) {
-        BookingDtoView bookingDtoView = bookingService.registerBooking(bookingDtoForm);
-        return ResponseEntity.status(HttpStatus.CREATED).body(bookingDtoView);
+    public ResponseEntity<?> createBooking(@RequestBody BookingDtoForm bookingDtoForm) {
+        try {
+            BookingDtoView bookingDtoView = bookingService.registerBooking(bookingDtoForm);
+            return ResponseEntity.status(HttpStatus.CREATED).body(bookingDtoView);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @Operation(summary = "Update an existing booking", description = "Updates a booking by its ID")

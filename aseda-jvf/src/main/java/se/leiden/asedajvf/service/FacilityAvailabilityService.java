@@ -1,8 +1,8 @@
 package se.leiden.asedajvf.service;
 
 import se.leiden.asedajvf.dto.FacilityAvailabilityDto;
-import se.leiden.asedajvf.model.FacilityAvailability;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface FacilityAvailabilityService {
@@ -10,4 +10,7 @@ public interface FacilityAvailabilityService {
     void createAvailability(FacilityAvailabilityDto dto);
     void updateAvailability(int availabilityId, FacilityAvailabilityDto dto);
     void deleteAvailability(int availabilityId);
+    List<FacilityAvailabilityDto> getAvailableTimeSlots(int facilityId, LocalDateTime startDate, LocalDateTime endDate);
+    void checkAvailabilityForBooking(int facilityId, LocalDateTime startTime, LocalDateTime endTime);
+    boolean isFacilityAvailable(int facilityId, LocalDateTime startTime, LocalDateTime endTime);
 }
