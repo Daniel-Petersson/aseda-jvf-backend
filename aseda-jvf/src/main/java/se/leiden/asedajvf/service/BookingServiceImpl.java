@@ -27,29 +27,33 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
     private final JwtService jwtService;
+    private final FacilityAvailabilityService facilityAvailabilityService;
 
     @Override
     @Transactional
-    public BookingDtoView registerBooking(BookingDtoForm bookingDtoForm) {
-        if (bookingDtoForm == null) {
-            throw new IllegalArgumentException("bookingDtoForm is null");
+    public BookingDtoView registerBooking(BookingDtoForm form) throws IllegalArgumentException {
+        checkFacilityAvailability(form.getFacilityId(), form.getStartTime(), form.getEndTime());
+        checkOverlappingBookings(form.getFacilityId(), form.getStartTime(), form.getEndTime());
+        
+        Booking booking = bookingMapper.toBooking(form);
+        if (booking == null) {
+            throw new IllegalArgumentException("Invalid booking data");
         }
         
-        List<Booking> conflictingBookings = findOverlappingBookings(
-            bookingDtoForm.getFacilityId(), // Use the integer directly
-            bookingDtoForm.getStartTime(),
-            bookingDtoForm.getEndTime()
-        );
-        
+        booking.setStatus(BookingStatus.PENDING);
+        Booking savedBooking = bookingRepository.save(booking);
+        return bookingMapper.toDto(savedBooking);
+    }
+
+    private void checkFacilityAvailability(int facilityId, LocalDateTime startTime, LocalDateTime endTime) {
+        facilityAvailabilityService.checkAvailabilityForBooking(facilityId, startTime, endTime);
+    }
+
+    private void checkOverlappingBookings(int facilityId, LocalDateTime startTime, LocalDateTime endTime) {
+        List<Booking> conflictingBookings = findOverlappingBookings(facilityId, startTime, endTime);
         if (!conflictingBookings.isEmpty()) {
             throw new IllegalArgumentException("Conflicting booking exists for the given time and facility");
         }
-        
-        Booking booking = bookingMapper.toBooking(bookingDtoForm);
-        booking.setStatus(BookingStatus.PENDING);
-
-        Booking savedBooking = bookingRepository.save(booking);
-        return bookingMapper.toDto(savedBooking);
     }
 
     @Override
@@ -130,6 +134,12 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.CONFIRMED);
         bookingRepository.save(booking);
         return bookingMapper.toDto(booking); // Use instance method
+    }
+
+    @Override
+    public boolean isFacilityAvailable(int facilityId, LocalDateTime startTime, LocalDateTime endTime) {
+        return facilityAvailabilityService.isFacilityAvailable(facilityId, startTime, endTime) &&
+               findOverlappingBookings(facilityId, startTime, endTime).isEmpty();
     }
 
     // TODO: Add more robust input validation, especially for date ranges and facility availability

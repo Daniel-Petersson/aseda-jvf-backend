@@ -33,9 +33,16 @@ class FacilityServiceTest {
 
     @Test
     void testGetAllFacilities() {
-        Facility facility1 = new Facility(1, "Facility 1", "Description 1", null);
-        Facility facility2 = new Facility(2, "Facility 2", "Description 2", null);
-        List<Facility> expectedFacilities = Arrays.asList(facility1, facility2);
+        Facility facility1 = new Facility();
+        facility1.setId(1);
+        facility1.setName("Facility 1");
+        facility1.setDescription("Description 1");
+
+        Facility facility2 = new Facility();
+        facility2.setId(2);
+        facility2.setName("Facility 2");
+        facility2.setDescription("Description 2");
+       List<Facility> expectedFacilities = Arrays.asList(facility1, facility2);
 
         when(facilityRepository.findAll()).thenReturn(expectedFacilities);
 
@@ -48,7 +55,10 @@ class FacilityServiceTest {
     @Test
     void testGetFacilityById_ExistingId() throws ResourceNotFoundException {
         int facilityId = 1;
-        Facility expectedFacility = new Facility(facilityId, "Facility 1", "Description 1", null);
+        Facility expectedFacility = new Facility();
+        expectedFacility.setId(facilityId);
+        expectedFacility.setName("Facility 1");
+        expectedFacility.setDescription("Description 1");
 
         when(facilityRepository.findById(facilityId)).thenReturn(Optional.of(expectedFacility));
 
@@ -71,7 +81,10 @@ class FacilityServiceTest {
     @Test
     void testGetFacilityByFacilityName_ExistingName() throws ResourceNotFoundException {
         String facilityName = "Facility 1";
-        Facility expectedFacility = new Facility(1, facilityName, "Description 1", null);
+        Facility expectedFacility = new Facility();
+        expectedFacility.setId(1);
+        expectedFacility.setName(facilityName);
+        expectedFacility.setDescription("Description 1");
 
         when(facilityRepository.findByNameIgnoreCase(facilityName)).thenReturn(Optional.of(expectedFacility));
 

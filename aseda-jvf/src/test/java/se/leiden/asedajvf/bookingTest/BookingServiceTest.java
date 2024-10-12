@@ -19,6 +19,7 @@ import se.leiden.asedajvf.repository.FacilityRepository;
 import se.leiden.asedajvf.repository.MemberRepository;
 import se.leiden.asedajvf.service.BookingServiceImpl;
 import se.leiden.asedajvf.service.JwtService;
+import se.leiden.asedajvf.service.FacilityAvailabilityService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
 
 public class BookingServiceTest {
 
@@ -45,6 +47,9 @@ public class BookingServiceTest {
 
     @Mock
     private JwtService jwtService;
+
+    @Mock
+    private FacilityAvailabilityService facilityAvailabilityService;
 
     @InjectMocks
     private BookingServiceImpl bookingService;
@@ -80,11 +85,73 @@ public class BookingServiceTest {
         when(bookingMapper.toBooking(any(BookingDtoForm.class))).thenReturn(booking);
         when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
         when(bookingMapper.toDto(any(Booking.class))).thenReturn(expectedView);
+        doNothing().when(facilityAvailabilityService).checkAvailabilityForBooking(anyInt(), any(), any());
 
         BookingDtoView result = bookingService.registerBooking(form);
 
         assertNotNull(result);
         verify(bookingRepository).save(any(Booking.class));
+        verify(facilityAvailabilityService).checkAvailabilityForBooking(anyInt(), any(), any());
+        verify(bookingRepository).findOverlappingBookings(anyInt(), any(), any());
+    }
+
+    @Test
+    void registerBooking_FacilityNotAvailable() {
+        BookingDtoForm form = new BookingDtoForm();
+        form.setFacilityId(1);
+        form.setMemberId(1);
+        form.setStartTime(LocalDateTime.now());
+        form.setEndTime(LocalDateTime.now().plusHours(1));
+
+doThrow(new IllegalArgumentException("Facility not available"))
+    .when(facilityAvailabilityService).checkAvailabilityForBooking(anyInt(), any(), any());
+        assertThrows(IllegalArgumentException.class, () -> bookingService.registerBooking(form));
+        verify(facilityAvailabilityService).checkAvailabilityForBooking(anyInt(), any(), any());
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void registerBooking_OverlappingBookings() {
+        BookingDtoForm form = new BookingDtoForm();
+        form.setFacilityId(1);
+        form.setMemberId(1);
+        form.setStartTime(LocalDateTime.now());
+        form.setEndTime(LocalDateTime.now().plusHours(1));
+
+        doNothing().when(facilityAvailabilityService).checkAvailabilityForBooking(anyInt(), any(), any());        when(bookingRepository.findOverlappingBookings(anyInt(), any(), any())).thenReturn(List.of(new Booking()));
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.registerBooking(form));
+        verify(facilityAvailabilityService).checkAvailabilityForBooking(anyInt(), any(), any());
+        verify(bookingRepository).findOverlappingBookings(anyInt(), any(), any());
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+    @Test
+    void isFacilityAvailable_True() {
+        int facilityId = 1;
+        LocalDateTime startTime = LocalDateTime.now();
+        LocalDateTime endTime = LocalDateTime.now().plusHours(1);
+
+        when(facilityAvailabilityService.isFacilityAvailable(facilityId, startTime, endTime)).thenReturn(true);
+
+        boolean result = bookingService.isFacilityAvailable(facilityId, startTime, endTime);
+
+        assertTrue(result);
+        verify(facilityAvailabilityService).isFacilityAvailable(facilityId, startTime, endTime);
+    }
+
+    @Test
+    void isFacilityAvailable_False() {
+        int facilityId = 1;
+        LocalDateTime startTime = LocalDateTime.now();
+        LocalDateTime endTime = LocalDateTime.now().plusHours(1);
+
+        when(facilityAvailabilityService.isFacilityAvailable(facilityId, startTime, endTime)).thenReturn(false);
+
+        boolean result = bookingService.isFacilityAvailable(facilityId, startTime, endTime);
+
+        assertFalse(result);
+        verify(facilityAvailabilityService).isFacilityAvailable(facilityId, startTime, endTime);
     }
 
     @Test
@@ -201,6 +268,22 @@ public class BookingServiceTest {
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(existingBooking));
 
         String token = "invalidToken"; // Mock or create an invalid token
+
+        assertThrows(UnauthorizedException.class, () -> bookingService.updateBooking(bookingId, form, token));
+    }
+
+    @Test
+    void updateBooking_Unauthorized() {
+        int bookingId = 1;
+        BookingDtoForm form = new BookingDtoForm();
+        Booking existingBooking = new Booking();
+        Member member = new Member();
+        member.setId(2); // Different member ID
+        existingBooking.setMember(member);
+
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(existingBooking));
+
+        String token = "validToken";
 
         assertThrows(UnauthorizedException.class, () -> bookingService.updateBooking(bookingId, form, token));
     }
@@ -368,4 +451,50 @@ public class BookingServiceTest {
 
         assertThrows(DataNotFoundException.class, () -> bookingService.confirmBooking(bookingId));
     }
+
+    @Test
+    void registerBooking_WithinAvailablePeriod_Success() {
+        BookingDtoForm form = new BookingDtoForm();
+        form.setFacilityId(1);
+        form.setMemberId(1);
+        form.setStartTime(LocalDateTime.of(2023, 10, 01, 10, 0)); // October 15, 2023, 10:00 AM
+        form.setEndTime(LocalDateTime.of(2023, 10, 31, 12, 0));   // October 15, 2023, 12:00 PM
+
+        Facility facility = new Facility();
+        Member member = new Member();
+        Booking booking = new Booking();
+        BookingDtoView expectedView = new BookingDtoView();
+
+        when(facilityRepository.findById(1)).thenReturn(Optional.of(facility));
+        when(memberRepository.findById(1)).thenReturn(Optional.of(member));
+        when(bookingRepository.findOverlappingBookings(anyInt(), any(), any())).thenReturn(new ArrayList<>());
+        when(bookingMapper.toBooking(any(BookingDtoForm.class))).thenReturn(booking);
+        when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
+        when(bookingMapper.toDto(any(Booking.class))).thenReturn(expectedView);
+        doNothing().when(facilityAvailabilityService).checkAvailabilityForBooking(anyInt(), any(), any());
+        BookingDtoView result = bookingService.registerBooking(form);
+
+        assertNotNull(result);
+        verify(bookingRepository).save(any(Booking.class));
+        verify(facilityAvailabilityService).checkAvailabilityForBooking(anyInt(), any(), any());
+        verify(bookingRepository).findOverlappingBookings(anyInt(), any(), any());
+    }
+
+    @Test
+    void registerBooking_OutsideAvailablePeriod_ThrowsException() {
+        BookingDtoForm form = new BookingDtoForm();
+        form.setFacilityId(1);
+        form.setMemberId(1);
+        form.setStartTime(LocalDateTime.of(2023, 11, 15, 10, 0)); // November 15, 2023, 10:00 AM
+        form.setEndTime(LocalDateTime.of(2023, 11, 15, 12, 0));   // November 15, 2023, 12:00 PM
+
+        doThrow(new IllegalArgumentException("Facility not available"))
+            .when(facilityAvailabilityService).checkAvailabilityForBooking(anyInt(), any(), any());
+
+        assertThrows(IllegalArgumentException.class, () -> bookingService.registerBooking(form));
+        verify(facilityAvailabilityService).checkAvailabilityForBooking(anyInt(), any(), any());
+        verify(bookingRepository, never()).save(any(Booking.class));
+    }
+
+
 }
