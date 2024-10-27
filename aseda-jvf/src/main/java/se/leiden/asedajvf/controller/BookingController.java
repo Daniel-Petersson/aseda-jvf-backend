@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.leiden.asedajvf.dto.BookingDtoForm;
 import se.leiden.asedajvf.dto.BookingDtoView;
+import se.leiden.asedajvf.exeptions.DataNotFoundException;
 import se.leiden.asedajvf.exeptions.UnauthorizedException;
 import se.leiden.asedajvf.service.BookingService;
 import se.leiden.asedajvf.service.JwtService;
@@ -44,19 +45,25 @@ public class BookingController {
     @Operation(summary = "Update an existing booking", description = "Updates a booking by its ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Booking updated successfully"),
-            @ApiResponse(responseCode = "404", description = "Booking not found")
+            @ApiResponse(responseCode = "404", description = "Booking not found"),
+            @ApiResponse(responseCode = "403", description = "Unauthorized to update this booking")
     })
     @PutMapping("{id}")
-    public ResponseEntity<BookingDtoView> updateBooking(
+    public ResponseEntity<?> updateBooking(
         @PathVariable int id,
         @RequestBody BookingDtoForm bookingDtoForm,
-        @RequestHeader("Authorization") String token) throws UnauthorizedException {
-        // Remove "Bearer " prefix if present
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
+        @RequestHeader("Authorization") String authHeader) {
+        try {
+            String token = jwtService.extractToken(authHeader);
+            BookingDtoView bookingDtoView = bookingService.updateBooking(id, bookingDtoForm, token);
+            return ResponseEntity.ok(bookingDtoView);
+        } catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
-        BookingDtoView bookingDtoView = bookingService.updateBooking(id, bookingDtoForm, token);
-        return ResponseEntity.ok(bookingDtoView);
     }
 
     @Operation(summary = "Get a booking by Id", description = "Retrieves a booking by its ID")
