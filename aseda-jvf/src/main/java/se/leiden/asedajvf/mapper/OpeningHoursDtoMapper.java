@@ -14,6 +14,7 @@ public class OpeningHoursDtoMapper {
             return null;
         }
         return OpeningHoursDto.builder()
+                .Id(openingHours.getOpeningId())
                 .facilityId(openingHours.getFacility().getId())
                 .openingTime(openingHours.getOpeningTime())
                 .closingTime(openingHours.getClosingTime())
@@ -23,6 +24,7 @@ public class OpeningHoursDtoMapper {
 
     public OpeningHours toOpeningHours(OpeningHoursDto dto, Facility facility, Member assignedLeader) {
         return OpeningHours.builder()
+                .openingId(dto.getId())
                 .facility(facility)
                 .openingTime(dto.getOpeningTime())
                 .closingTime(dto.getClosingTime())

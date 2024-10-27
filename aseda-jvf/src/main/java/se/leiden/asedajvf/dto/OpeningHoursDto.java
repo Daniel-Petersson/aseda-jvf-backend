@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 public class OpeningHoursDto {
+    private int Id;
     private int facilityId;
     private LocalDateTime openingTime; 
     private LocalDateTime closingTime; 
