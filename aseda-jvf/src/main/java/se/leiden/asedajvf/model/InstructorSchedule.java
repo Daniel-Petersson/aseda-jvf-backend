@@ -1,6 +1,5 @@
 package se.leiden.asedajvf.model;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import java.time.LocalDateTime;
 

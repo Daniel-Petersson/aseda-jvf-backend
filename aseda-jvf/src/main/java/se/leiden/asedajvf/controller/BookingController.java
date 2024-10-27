@@ -10,6 +10,7 @@ import se.leiden.asedajvf.dto.BookingDtoForm;
 import se.leiden.asedajvf.dto.BookingDtoView;
 import se.leiden.asedajvf.exeptions.UnauthorizedException;
 import se.leiden.asedajvf.service.BookingService;
+import se.leiden.asedajvf.service.JwtService;
 
 import java.util.List;
 
@@ -18,9 +19,11 @@ import java.util.List;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final JwtService jwtService;
 
-    public BookingController(BookingService bookingService) {
+    public BookingController(BookingService bookingService, JwtService jwtService) {
         this.bookingService = bookingService;
+        this.jwtService = jwtService;
     }
 
     @Operation(summary = "Create a new booking", description = "Creates a new booking")
@@ -85,11 +88,8 @@ public class BookingController {
     @DeleteMapping("{id}")
     public ResponseEntity<Void> deleteBooking(
         @PathVariable int id,
-        @RequestHeader("Authorization") String token) throws UnauthorizedException {
-        // Remove "Bearer " prefix if present
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
+        @RequestHeader("Authorization") String authHeader) throws UnauthorizedException {
+        String token = jwtService.extractToken(authHeader);
         bookingService.deleteBooking(id, token);
         return ResponseEntity.noContent().build();
     }
