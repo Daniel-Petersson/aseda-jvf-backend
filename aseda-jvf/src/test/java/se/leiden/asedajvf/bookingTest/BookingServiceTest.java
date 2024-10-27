@@ -55,7 +55,7 @@ public class BookingServiceTest {
     private BookingServiceImpl bookingService;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws UnauthorizedException {
         MockitoAnnotations.openMocks(this);
         
         // Mocking JwtService to return a valid Claims object
@@ -317,13 +317,13 @@ doThrow(new IllegalArgumentException("Facility not available"))
         int bookingId = 1;
         Booking booking = new Booking();
         Member member = new Member();
-        member.setId(1); // Set member ID
-        booking.setMember(member); // Set member in booking
+        member.setId(1);
+        booking.setMember(member);
 
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
         doNothing().when(bookingRepository).delete(booking);
 
-        String token = "validToken"; // Mock or create a valid token
+        String token = "validToken";
 
         boolean result = bookingService.deleteBooking(bookingId, token);
 
@@ -356,19 +356,19 @@ doThrow(new IllegalArgumentException("Facility not available"))
         int bookingId = 1;
         Booking booking = new Booking();
         Member member = new Member();
-        member.setId(1); // Set member ID
-        booking.setMember(member); // Set member in booking
+        member.setId(1);
+        booking.setMember(member);
 
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
         doNothing().when(bookingRepository).delete(booking);
 
-        // Mocka token för admin
-        Claims claims = mock(Claims.class);
-        when(claims.get("memberId", Integer.class)).thenReturn(2); // Olika medlems-ID
-        when(claims.get("role", String.class)).thenReturn("ADMIN");
-        when(jwtService.validateTokenAndGetClaims(anyString())).thenReturn(claims);
+        // Mock token for admin
+        Claims adminClaims = mock(Claims.class);
+        when(adminClaims.get("memberId", Integer.class)).thenReturn(2);
+        when(adminClaims.get("role", String.class)).thenReturn("ADMIN");
+        when(jwtService.validateTokenAndGetClaims("adminToken")).thenReturn(adminClaims);
 
-        String token = "adminToken"; // Mocka eller skapa en giltig admin-token
+        String token = "adminToken";
 
         boolean result = bookingService.deleteBooking(bookingId, token);
 

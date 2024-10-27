@@ -31,4 +31,6 @@ public class Facility {
     private List<OpeningHours> openingHours = new ArrayList<>();
     @OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<FacilityAvailability> availabilities = new ArrayList<>();
+    @OneToMany(mappedBy = "facility")
+    private List<InstructorSchedule> instructorSchedules;
 }
